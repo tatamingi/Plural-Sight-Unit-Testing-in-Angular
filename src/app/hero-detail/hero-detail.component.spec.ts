@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from "@angular/core/testing";
 import { HeroDetailComponent } from "./hero-detail.component";
 import { ActivatedRoute } from "@angular/router";
 import { HeroService } from "../hero.service";
@@ -14,28 +14,45 @@ describe('HeroDetailComponent', () => {
 
   beforeEach(() => {
     mockActivatedRoute = {
-      snapshot: { paramMap: { get: () => { return '3'; } } }
+      snapshot: {
+        paramMap: {
+          get: () => {
+            return '3';
+          }
+        }
+      }
     }
     mockHeroService = jasmine.createSpyObj(['getHero', 'updateHero']);
     mockLocation = jasmine.createSpyObj(['back']);
 
     TestBed.configureTestingModule({
-      imports: [ FormsModule ],
-      declarations: [ HeroDetailComponent ],
+      imports: [FormsModule],
+      declarations: [HeroDetailComponent],
       providers: [
-        { provide: ActivatedRoute, useValue: mockActivatedRoute },
-        { provide: HeroService, useValue: mockHeroService },
-        { provide: Location, useValue: mockLocation }
+        {provide: ActivatedRoute, useValue: mockActivatedRoute},
+        {provide: HeroService, useValue: mockHeroService},
+        {provide: Location, useValue: mockLocation}
       ]
     })
     fixture = TestBed.createComponent(HeroDetailComponent);
+    mockHeroService.getHero.and.returnValue(of({id: 3, name: 'SuperDude', strength: 100}));
   })
 
   it('should render hero name in a h2 tag', () => {
-    mockHeroService.getHero.and.returnValue(of({ id: 3, name: 'SuperDude', strength: 100 }));
-
     fixture.detectChanges(); // act
 
     expect(fixture.nativeElement.querySelector('h2').textContent).toContain('SUPERDUDE');
   })
+
+  it('should call update hero when saved is called', fakeAsync(() => {
+      mockHeroService.updateHero.and.returnValue(of({}));
+      fixture.detectChanges();
+
+      fixture.componentInstance.save();
+      // tick(250);
+      flush();
+
+      expect(mockHeroService.updateHero).toHaveBeenCalled();
+    })
+  )
 })
